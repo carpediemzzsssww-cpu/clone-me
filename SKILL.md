@@ -135,14 +135,14 @@ Generate a self-contained HTML file for the chat widget. The widget should:
    - Provide an image URL for their avatar or a character/mascot
 3. **Have a dark, polished UI** — dark background, rounded corners, gradient accents (#8b6cff → #ff6cb4)
 4. **Include API configuration section** in the code with clear comments for:
-   - **OpenAI-compatible API** — OpenAI, Groq, Together, DeepSeek, Moonshot (Kimi), local Ollama, any `/v1/chat/completions` endpoint
+   - **OpenAI-compatible API** — OpenAI, Groq, Grok (xAI), Together, DeepSeek, Moonshot (Kimi), local Ollama, any `/v1/chat/completions` endpoint
    - **Anthropic Claude API** — direct Claude API with `anthropic-version` header
    - **Google Gemini API** — via `generativelanguage.googleapis.com`
    - **Azure OpenAI** — Azure-hosted OpenAI models
    - **AWS Bedrock** — via signed requests (commented example)
    - **Custom / self-hosted** — any endpoint that accepts OpenAI-format requests
 5. **Provide a runtime API switcher UI** — a settings panel (gear icon) where the user can:
-   - Select provider from a dropdown (OpenAI / Claude / Gemini / DeepSeek / Groq / Ollama / Custom)
+   - Select provider from a dropdown (OpenAI / Claude / Gemini / DeepSeek / Groq / Grok / Ollama / Custom)
    - Enter API key
    - Enter model name
    - Enter custom endpoint URL (for self-hosted / proxy)

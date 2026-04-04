@@ -25,6 +25,7 @@ The generated chat widget supports switching between providers at runtime:
 | Google Gemini | `generativelanguage.googleapis.com` |
 | DeepSeek | `api.deepseek.com/v1/chat/completions` |
 | Groq | `api.groq.com/openai/v1/chat/completions` |
+| Grok (xAI) | `api.x.ai/v1/chat/completions` |
 | Together AI | `api.together.xyz/v1/chat/completions` |
 | Moonshot (Kimi) | `api.moonshot.cn/v1/chat/completions` |
 | Ollama (local) | `localhost:11434/v1/chat/completions` |
@@ -36,7 +37,7 @@ The generated chat widget supports switching between providers at runtime:
 #### Option 1: Clone the repo
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/clone-me.git ~/.claude/skills/clone-me
+git clone https://github.com/carpediemzzsssww-cpu/clone-me.git ~/.claude/skills/clone-me
 ```
 
 #### Option 2: Manual copy
@@ -110,6 +111,7 @@ After the conversation, you'll get:
 | Google Gemini | `generativelanguage.googleapis.com` |
 | DeepSeek（深度求索） | `api.deepseek.com/v1/chat/completions` |
 | Groq | `api.groq.com/openai/v1/chat/completions` |
+| Grok (xAI) | `api.x.ai/v1/chat/completions` |
 | Together AI | `api.together.xyz/v1/chat/completions` |
 | Moonshot（Kimi） | `api.moonshot.cn/v1/chat/completions` |
 | Ollama（本地） | `localhost:11434/v1/chat/completions` |
@@ -121,7 +123,7 @@ After the conversation, you'll get:
 #### 方式一：克隆仓库
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/clone-me.git ~/.claude/skills/clone-me
+git clone https://github.com/carpediemzzsssww-cpu/clone-me.git ~/.claude/skills/clone-me
 ```
 
 #### 方式二：手动复制
