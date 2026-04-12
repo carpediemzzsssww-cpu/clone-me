@@ -29,8 +29,16 @@ Ask what they want their clone for. Frame it as options:
 - **Work delegate** — handles FAQs & initial communication on your behalf
 - **Knowledge clone** — turns expertise into interactive conversation
 - **Social persona** — represents your style & views in social contexts
+- **Product customer service** — a branded AI assistant for a product/website (e.g. answering FAQs, guiding users to features, product knowledge bot)
 
 This determines the tone and boundaries of the system prompt.
+
+**Product customer service shortcut**: If the user chooses this option and there is an existing codebase/PRD in the current project, skip Phases 2-5 and instead:
+1. Read the codebase, PRD, and any project CLAUDE.md to extract product knowledge
+2. Ask only: bot name, knowledge scope (product-only vs broader), fallback behavior, where to embed (floating bubble vs standalone)
+3. Generate system prompt with comprehensive product knowledge (features, pricing, FAQ, usage steps)
+4. Generate the widget as a **React component** (not standalone HTML) if the target is an existing React app, or standalone HTML otherwise
+5. Create a server-side API endpoint if the user has an existing API setup (e.g. Vercel Serverless + existing LLM API key)
 
 ### Phase 2: Identity
 
@@ -152,6 +160,15 @@ Generate a self-contained HTML file for the chat widget. The widget should:
 8. **Include a "Powered by Clone Me" badge**
 
 Write the HTML file using the Write tool. Name it `clone-me-[name].html`.
+
+### Alternative: React Component Output
+
+If the target is an existing React/Next.js app, generate a **React component** (`ChatWidget.tsx`) instead of standalone HTML:
+- Create a Vercel Serverless API endpoint (`api/chat.ts`) that proxies to the user's LLM API (keep API key server-side)
+- Component uses `fetch('/api/chat')` instead of direct API calls (no exposed keys)
+- Style with the app's existing design system (Tailwind classes, CSS variables)
+- Include: floating bubble, chat panel, quick question buttons, typing indicator, IME-safe Enter handling (`isComposing` check for Chinese input)
+- Add to `App.tsx` or layout as a global overlay component
 
 ---
 
