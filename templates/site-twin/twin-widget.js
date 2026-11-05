@@ -2,9 +2,9 @@
  * Clone Me site twin: a floating chat bubble for a personal website.
  * Embed:
  *   <script src="/twin-widget.js" defer
- *     data-name="Iris"
+ *     data-name="Mira"
  *     data-avatar="/avatar.png"            (image URL, emoji, or leave out for initials)
- *     data-greeting="嗨，我是 Iris 的 AI 分身。可以问我做过的作品、在想的事。"
+ *     data-greeting="嗨，我是 Mira 的 AI 分身。可以问我做过的作品、在想的事。"
  *     data-questions="你最近在做什么？|讲讲你最喜欢的作品|怎么联系真人？"
  *     data-contact="mailto:hi@example.com"
  *     data-endpoint="/api/chat"
