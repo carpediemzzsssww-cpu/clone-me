@@ -1,2 +1,4 @@
 .DS_Store
 *.html
+!templates/**/*.html
+__pycache__/

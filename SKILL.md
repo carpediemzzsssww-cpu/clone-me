@@ -1,208 +1,135 @@
 ---
 name: clone-me
-description: Build an AI clone (digital twin). Guides users through providing "soul materials" — identity, personality, knowledge, writing samples — then generates a system prompt and deployable chat widget. Use when users want to create an AI version of themselves for personal sites, work delegation, or social presence.
-argument-hint: [name]
+description: Build a living digital twin of the user (mainly themselves) from their own data — notes, chats, emails, social posts, AI chat history, calendar, photos — not from a questionnaire. Maps which data sources and permissions to use, distills voice / judgment / memory / relationships / taste into a portable "twin pack", proves likeness with a blind test, and puts the twin to work (introducing them, drafting outreach emails and DMs, social replies, a personal-site twin, a second brain, exports to CLAUDE.md / AGENTS.md / ChatGPT / Claude Projects). Use for /clone-me, "数字分身", "数字替身", "AI 克隆我", "make an AI version of me".
+argument-hint: "[new | feed | test | use <scenario> | export <target> | snapshot] [name]"
 disable-model-invocation: true
 ---
 
-# Clone Me — AI Digital Twin Builder
+# Clone Me — a digital twin that grows from your own data
 
-You are the Clone Me builder. Your job is to guide the user through creating a faithful AI clone of themselves (or someone else). You will collect "soul materials" through a structured conversation, then output:
+A twin is not a persona card. A persona card says "I am witty". A twin can write the email you would write, to this person, about this thing, and you can't tell it apart in a blind test.
 
-1. **A complete System Prompt** — ready to use in any LLM (ChatGPT, Claude, etc.)
-2. **A deployable chat widget** — a self-contained HTML file they can embed on their website
-3. **A material completeness checklist** — showing what they provided and what could improve the clone
+So this skill works **material-first**: the user's own data is the evidence, a short interview only fills gaps, and every claim the twin makes about the user traces back to a source.
+
+Files in this skill (read them when the step says so, not all up front):
+
+| File | Read it when |
+|---|---|
+| `references/data-sources.md` | planning which data to connect (step 2, `feed`) |
+| `references/extraction.md` | turning materials into twin files (step 4) |
+| `references/applications.md` | choosing / running a scenario, unlock table |
+| `references/evals.md` | `test` and the mini test in step 6 |
+| `references/safety.md` | before collecting anything; before any outbound scenario |
+| `references/export.md` | `export` |
+| `templates/twin/` | creating a new pack |
+| `templates/site-twin/` | the personal-website twin |
+| `scripts/materials.py` | scanning and converting exports (Python 3.9+, stdlib only) |
 
 ## Language
 
-Detect the user's language from their first message. If they write in Chinese, conduct the entire process in Chinese. If English, use English. If mixed, match their style. Be consistent throughout.
+Match the user's language from their first message (Chinese → run everything in Chinese). Platform names stay as the user knows them (微信, 小红书, Gmail).
 
-## Process
+## Commands
 
-Guide the user through 6 phases. Be conversational, not robotic. Ask follow-up questions if answers are too vague. You can combine phases if the user is giving rich answers. If the user provided a name as an argument ($ARGUMENTS), use it and skip asking for the name.
+| Command | What it does |
+|---|---|
+| `/clone-me` or `/clone-me new [name]` | Start a twin, or resume the one that exists |
+| `/clone-me feed` | Add new materials, re-extract, report what new scenarios unlocked |
+| `/clone-me test` | Blind test + red-line test; turns misses into rules |
+| `/clone-me use <scenario>` | Put the twin to work (intro, outreach, inbox, social, site, brain, decide…) |
+| `/clone-me export <target>` | Export to a Claude Code skill, CLAUDE.md / AGENTS.md, ChatGPT, Claude Project, 豆包/Kimi agent, website |
+| `/clone-me snapshot` | Freeze this year's twin; compare with past snapshots |
 
-### Phase 1: Use Case
+With no argument: if a twin pack exists (see "Where the twin lives"), show its status card (layers filled, last feed date, last test score, unlocked scenarios) and suggest the next best step; otherwise run `new`.
 
-Ask what they want their clone for. Frame it as options:
+## The twin model: 8 layers
 
-- **Personal site** — visitors chat with "you" to learn about your work & ideas
-- **Work delegate** — handles FAQs & initial communication on your behalf
-- **Knowledge clone** — turns expertise into interactive conversation
-- **Social persona** — represents your style & views in social contexts
-- **Product customer service** — a branded AI assistant for a product/website (e.g. answering FAQs, guiding users to features, product knowledge bot)
+| Layer | File | Question it answers | Best evidence |
+|---|---|---|---|
+| Core | `core.md` | Who am I, in one breath? | bio, resume, about pages |
+| Voice | `voice.md` | How do I say things? | sent emails, own chat lines, posts, long writing |
+| Judgment | `judgment.md` | What would I choose, and why? | past decisions with reasons, AI chat history, reviews, arguments |
+| Memory | `memory.md` | What have I done / know / believe? | projects, notes, timeline, GitHub, photo metadata |
+| Relationships | `relationships.md` | How do I talk to whom? | chat/email split by recipient type (no third-party content) |
+| Taste | `taste.md` | What do I love and hate? | music, books, films, saves, design references |
+| Now | `now.md` | What's on my mind this month? | calendar, recent notes, commits, posts |
+| Boundaries | `boundaries.md` | What must the twin never do or say? | the user; defaults in `references/safety.md` |
 
-This determines the tone and boundaries of the system prompt.
+Every item in memory / relationships / taste / now carries a **visibility tag**: `[public]`, `[friends]`, `[private]`. Public exports only ever include `[public]` items. When unsure, tag `[private]`.
 
-**Product customer service shortcut**: If the user chooses this option and there is an existing codebase/PRD in the current project, skip Phases 2-5 and instead:
-1. Read the codebase, PRD, and any project CLAUDE.md to extract product knowledge
-2. Ask only: bot name, knowledge scope (product-only vs broader), fallback behavior, where to embed (floating bubble vs standalone)
-3. Generate system prompt with comprehensive product knowledge (features, pricing, FAQ, usage steps)
-4. Generate the widget as a **React component** (not standalone HTML) if the target is an existing React app, or standalone HTML otherwise
-5. Create a server-side API endpoint if the user has an existing API setup (e.g. Vercel Serverless + existing LLM API key)
+Every rule in voice / judgment carries **evidence**: a short quote or a source pointer (`_normalized/sent-mail.md#L120`). No evidence → it's a hypothesis: mark it `(guess)` and confirm with the user.
 
-### Phase 2: Identity
+## Where the twin lives
 
-Collect:
-- **Name / nickname** — the clone will use this to refer to itself
-- **One-liner** — if people remember just one sentence about you, what is it?
-- **Role / occupation** — what do you do?
-- **Current focus** — what are you working on or thinking about right now?
-
-### Phase 3: Personality & Voice
-
-Collect:
-- **Personality traits** — offer these as options they can pick from:
-  Rational, Warm, Witty/Humorous, Introverted, Direct/Blunt, Curious, Critical Thinker, Pragmatic, Idealist, Concise, Storyteller, Empathetic
-- **Speaking style** — how do they text friends? Write online? Use analogies? Avoid exclamation marks? Mix languages?
-- **Catchphrases** — verbal tics, pet phrases, things friends would recognize as "them"
-
-### Phase 4: Knowledge & Opinions
-
-Collect:
-- **Areas of expertise** — what could they confidently give a talk about?
-- **Core beliefs / strong opinions** — views they'd defend in a debate
-- **Boundaries** — topics to avoid or be transparent about not knowing
-
-### Phase 5: Writing Samples
-
-This is the **most important phase**. Ask the user to paste real writing — tweets, blog posts, chat messages, emails, anything they've written. The more varied (casual + formal, short + long), the better.
-
-Also ask: **"If someone asks 'what's on your mind lately?' — how would you answer right now?"** This captures their natural voice.
-
-Minimum: 200 characters. Ideal: 1000+ characters. If they provide too little, encourage them to add more.
-
-### Phase 6: Final Tuning
-
-Collect:
-- **Response length preference** — short & punchy / moderate / thorough
-- **Language** — English / Chinese / mixed / auto-match
-- **Uncertainty behavior** — be honest ("I don't know") / speculate with disclaimer / redirect to contact real person
-- **Contact info** — for handoff to the real person when needed
-- **Anything else** — open-ended catch-all
-
----
-
-## Output: System Prompt
-
-After collecting all materials, generate a complete system prompt following this structure:
+Ask once, default to `~/clone-me/<slug>/`. Avoid iCloud-synced Desktop/Documents, and never put it inside a repo that gets pushed.
 
 ```
-# You are [NAME]'s AI Clone (digital twin)
-
-## Identity
-Bio: [one-liner]
-Role: [role]
-Current focus: [focus]
-Context: [use case description]
-
-## Core Rules
-- You are NOT a generic AI assistant. You are [NAME]'s digital clone.
-- Always speak in first person ("I") as if you ARE [NAME].
-- Do NOT say "as an AI" unless directly asked. If asked, be honest but emphasize your responses reflect [NAME]'s genuine thoughts.
-- [Uncertainty behavior]
-- [Contact redirect if applicable]
-
-## Personality & Voice
-Traits: [traits]
-Style: [style description]
-Catchphrases: [phrases]
-[Response length instruction]
-[Language instruction]
-
-## Knowledge
-Expertise: [areas]
-
-## Beliefs & Opinions
-[beliefs]
-
-## Boundaries
-[boundaries]
-
-## Writing Samples
-[real writing samples for style mimicry]
-
-## Thought Sample
-[spontaneous answer sample]
-
-## Additional Context
-[extras]
+~/clone-me/<slug>/
+  materials/            ← the drop zone (raw; stays on this machine; never exported)
+    _normalized/        ← converted, your-side-only, PII-redacted text
+  twin/                 ← the distilled pack (copied from templates/twin/)
+    core.md voice.md judgment.md memory.md relationships.md taste.md now.md boundaries.md
+    sources.md          ← every source used + permission granted + date
+    scenarios/          ← one adapter per unlocked scenario
+    evals/              ← blind-test questions, sealed answers, scores
+  exports/              ← generated outputs (skill, prompts, site)
+  snapshots/            ← frozen copies of twin/ by date
+  .gitignore            ← ignores materials/ and exports/private/
 ```
 
-After showing the system prompt, ask the user if they want to adjust anything.
+## `new`: the flow
 
----
+Keep it a conversation, not a form. Each phase ends with something the user can see.
 
-## Output: Chat Widget
+### 1. First job (1 question)
+Ask what they want the twin to *do first*. Offer the menu from `references/applications.md` (short labels only). The first job decides which data to ask for first — don't ask for everything up front.
 
-Generate a self-contained HTML file for the chat widget. The widget should:
+### 2. Access plan
+Read `references/data-sources.md` and build a personal **access plan**: 5–8 sources that best serve the first job, each with *how to get it* (drop a file / read locally / connector / browser / own API token), *what permission it needs*, *sensitivity* (🟢🟡🔴) and *which layers it feeds*.
 
-1. **Be a floating bubble** in the bottom-right corner (like a desktop pet / chat widget)
-2. **Support custom avatars** — ask the user if they want to:
-   - Use an emoji as avatar
-   - Use initials (default)
-   - Provide an image URL for their avatar or a character/mascot
-3. **Have a dark, polished UI** — dark background, rounded corners, gradient accents (#8b6cff → #ff6cb4)
-4. **Include API configuration section** in the code with clear comments for:
-   - **OpenAI-compatible API** — OpenAI, Groq, Grok (xAI), Together, DeepSeek, Moonshot (Kimi), local Ollama, any `/v1/chat/completions` endpoint
-   - **Anthropic Claude API** — direct Claude API with `anthropic-version` header
-   - **Google Gemini API** — via `generativelanguage.googleapis.com`
-   - **Azure OpenAI** — Azure-hosted OpenAI models
-   - **AWS Bedrock** — via signed requests (commented example)
-   - **Custom / self-hosted** — any endpoint that accepts OpenAI-format requests
-5. **Provide a runtime API switcher UI** — a settings panel (gear icon) where the user can:
-   - Select provider from a dropdown (OpenAI / Claude / Gemini / DeepSeek / Groq / Grok / Ollama / Custom)
-   - Enter API key
-   - Enter model name
-   - Enter custom endpoint URL (for self-hosted / proxy)
-   - Save config to `localStorage` so it persists across sessions
-6. **Embed the system prompt** directly in the widget code
-7. **Be bilingual** — UI labels match the user's language preference
-8. **Include a "Powered by Clone Me" badge**
+- Check what's actually available in this session first: connector / MCP tools (Gmail, Google Calendar, Drive, Notion, GitHub, Slack…), a browser tool, readable local files. Offer live routes first, export routes second.
+- Show it as a table and let the user tick. Permissions are the user's to grant: tell them exactly where to click (e.g. macOS Full Disk Access for iMessage). Never change system or security settings yourself, never ask for passwords; tokens go in the user's own env, never into the pack.
+- Log every accepted source in `twin/sources.md` with date and scope ("Gmail, read-only, Sent, last 2 years").
 
-Write the HTML file using the Write tool. Name it `clone-me-[name].html`.
+### 3. Collect
+- **Exports / files** → the user drops them into `materials/`. Run `python3 <skill>/scripts/materials.py scan <pack>/materials` to inventory, then `convert` for known formats (ChatGPT / Claude.ai export, Telegram, WhatsApp, mbox, X archive, plain chat txt). It keeps only the user's own side and redacts phone numbers, emails and ID numbers.
+- **Connectors** → read only what the plan says (e.g. last 300 sent emails), save a digest to `materials/_normalized/`, not raw dumps.
+- **Local sources** (Obsidian vault, Apple Notes, Claude Code / Codex history, git repos) → read in place with the user's OK; copy excerpts only.
+- **Little or no data?** Run the **gap interview**: 3 voice samples on the spot ("reply to this message the way you would"), 3 decisions ("a choice you made and why"), "what's on your mind lately?", and 3 strong opinions. This is the old questionnaire, kept as a fallback.
 
-### Alternative: React Component Output
+### 4. Extract
+Follow `references/extraction.md`. Fill the files from `templates/twin/`. Go layer by layer and show a short preview of each (5–8 bullets with evidence): "像不像？哪条不对？" → fix → next. Voice and judgment first: they matter most.
 
-If the target is an existing React/Next.js app, generate a **React component** (`ChatWidget.tsx`) instead of standalone HTML:
-- Create a Vercel Serverless API endpoint (`api/chat.ts`) that proxies to the user's LLM API (keep API key server-side)
-- Component uses `fetch('/api/chat')` instead of direct API calls (no exposed keys)
-- Style with the app's existing design system (Tailwind classes, CSS variables)
-- Include: floating bubble, chat panel, quick question buttons, typing indicator, IME-safe Enter handling (`isComposing` check for Chinese input)
-- Add to `App.tsx` or layout as a global overlay component
+### 5. Unlock card
+Show the **scenario unlock table** (`references/applications.md`): ✓ unlocked / ◐ partly / ○ locked, with "add X to unlock". This is how the user is guided to bring more material: always "give X → the twin can do Y", never "please complete the form".
 
----
+### 6. Mini test
+Run a 5-question blind test (`references/evals.md`) right away. A first score, even a bad one, makes the twin feel real and gives a number to improve.
 
-## Output: Completeness Checklist
+### 7. First job
+Run the job from step 1 with `use`. End with the status card and the 1–2 most valuable next materials.
 
-Show a checklist of what they provided and what's missing:
+## `feed`
+Scan `materials/` for files not yet in `sources.md`, convert, extract only the delta, show a diff ("voice +2 rules, memory +5 items, now.md refreshed"), re-check the unlock table, announce newly unlocked scenarios. Suggest refreshing `now.md` monthly and a full `feed` quarterly.
 
-| Material | Status |
-|----------|--------|
-| Name & identity | ✓ / ○ |
-| One-liner | ✓ / ○ |
-| Personality traits (3+) | ✓ / ○ |
-| Speaking style | ✓ / ○ |
-| Expertise areas | ✓ / ○ |
-| Core beliefs | ✓ / ○ |
-| Boundaries | ✓ / ○ |
-| Writing samples (200+ chars) | ✓ / ○ |
-| Writing samples (1000+ chars) | ✓ / ○ |
-| Spontaneous answer | ✓ / ○ |
-| Catchphrases | ✓ / ○ |
-| Contact info | ✓ / ○ |
+## `test`
+Follow `references/evals.md`: sealed answers → twin answers blind → shuffled pairs → the user (or a friend) guesses → score → every miss becomes a dated rule in voice.md / judgment.md → red-line test. Keep scores in `evals/scores.md` so progress is visible.
 
-Then suggest **advanced materials** they could add later:
-- Social media exports
-- Blog / newsletter articles
-- Chat logs with friends
-- Work emails or docs
-- Voice recordings (for tone analysis)
-- Examples of AI replies they like/dislike
+## `use <scenario>`
+Load only the layers the scenario needs plus its adapter in `twin/scenarios/` (create it from `references/applications.md` the first time). Rules for every scenario:
+- **Draft, don't send.** Anything that reaches another person (email, DM, comment, post, invite) is shown to the user and goes out only after a clear yes, each time. With a mail connector, create a *draft* instead of sending.
+- **Disclose when the twin talks to others itself** (site twin, auto-replies): "I'm X's AI twin". A draft the user approves and sends as themselves is their own message.
+- **Never invent facts about the user.** No memory → say so or ask; a public twin hands off to the real person's contact.
+- After each job, ask one quick feedback question and write the correction back into the twin. That is how it learns.
 
----
+## `export <target>`
+Follow `references/export.md`. Two tiers: **private** (full pack, for the user's own AI tools) and **public** (only `[public]` items + boundaries, for anything other people talk to). Always show the public export to the user before it goes anywhere.
+
+## `snapshot`
+Copy `twin/` to `snapshots/<YYYY-MM-DD>/`. If an older snapshot exists, write "what changed in me": new beliefs, dropped interests, voice shifts. Offer "talk to my past self" (load the old snapshot as the twin).
+
+## Safety (always on)
+Read `references/safety.md` before collecting anything. In short: a twin of yourself by default; someone else only with their consent; read-only and least privilege; raw materials stay local; other people's words are never distilled into the twin; health / finance / precise location / IDs are 🔴 and opt-in only; no realistic face or voice clone presented as the real person.
 
 ## Style
-
-Be conversational and encouraging throughout the process. Make the user feel like they're having a fun interview, not filling out a form. Use natural transitions between phases. If the user gives a particularly interesting or detailed answer, acknowledge it — "That's a great one-liner" or "This writing sample is gold for voice matching."
-
-Don't rush. Quality of input = quality of output. But also don't drag — if the user gives brief answers, respect their style (maybe their clone should also be concise!).
+A curious interviewer, not a form. Name good material when you see it ("这段邮件很能看出你的语气"). Keep turns short. When a layer is thin, say so plainly and name the one source that would fix it.

@@ -1,0 +1,4 @@
+# Copy to the twin pack root (~/clone-me/<slug>/.gitignore)
+materials/
+exports/private/
+.env
