@@ -2,3 +2,13 @@
 *.html
 !templates/**/*.html
 __pycache__/
+node_modules/
+.env
+.env.*
+.vercel/
+.codex/
+.claude/
+.agents/
+*.zip
+release/
+output/
